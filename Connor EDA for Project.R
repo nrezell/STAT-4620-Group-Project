@@ -112,3 +112,5 @@ traindf_upd <- train_df %>%
 
 library(glmnet)
 
+# LASSO
+x = model.matrix(SalePrice~.,traindf_upd)[,-1]
