@@ -117,8 +117,6 @@ test.fac.df <- as.data.frame(unclass(test_fac),stringsAsFactors=TRUE)
 train <- cbind(train.num, train.fac.df)
 test <- cbind(test.num, test.fac.df)
 
-sapply(train, function(x) sum(is.na(x)))
-
 train = na.omit(train)
 test = na.omit(test)
 
@@ -127,10 +125,10 @@ train = train[,-1]
 test = test[, -1]
 
 # Remove Utilities variables
-train = train[,-43]
-test = test[,-43]
+train = train[,-62]
+test = test[,-62]
 
-summary(train)
+summary(test)
 
 # MODELS
 
