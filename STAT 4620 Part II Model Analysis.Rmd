@@ -1,0 +1,266 @@
+---
+title: 'STAT 4620 Part II: Model Analysis'
+author: "Phillip Brown (brown.7234)"
+date: "December 12, 2022"
+output: html_document
+---
+
+``` {r}
+library (glmnet)
+library (pls)
+```
+
+``` {r}
+train <- read.csv ("~/Desktop/Ames/train.csv", header = TRUE, row.names = 1, na.strings = ".")
+
+test <- read.csv ("~/Desktop/Ames/test_new.csv", header = TRUE, row.names = 1, na.strings = ".")
+```
+
+``` {r}
+# MSSubClass (INT)
+# MSZoning (CHR)
+train$LotFrontage [train$LotFrontage == "NA"] <- 0
+train$LotFrontage <- as.numeric (train$LotFrontage)
+# LotArea (INT)
+train$Street <- factor (train$Street, levels = c ("Grvl", "Pave"), ordered = TRUE)
+train$Alley <- factor (train$Alley, levels = c ("NA", "Grvl", "Pave"), ordered = TRUE)
+train$LotShape <- factor (train$LotShape, levels = c ("IR3", "IR2", "IR1", "Reg"), ordered = TRUE)
+# LandContour (CHR)
+# train$Utilities <- factor (train$Utilities, levels = c ("NA", "ELO", "NoSeWa", "NoSewr", "AllPub"), ordered = TRUE)
+# LotConfig (CHR)
+train$LandSlope <- factor (train$LandSlope, levels = c ("Sev", "Mod", "Gtl"), ordered = TRUE)
+# Neighborhood (CHR)
+# Condition1 (CHR)
+# Condition2 (CHR)
+# BldgType (CHR)
+# HouseStyle (CHR)
+# OverallQual (INT)
+# OverallCond (INT)
+# YearBuilt (INT)
+# YearRemodAdd (INT)
+# RoofStyle (CHR)
+# RoofMat1 (CHR)
+# Exterior1st (CHR)
+# Exterior2nd (CHR)
+# MasVnrType (CHR)
+train$MasVnrArea [train$MasVnrArea == "NA"] <- 0
+train$MasVnrArea <- as.numeric (train$MasVnrArea)
+train$ExterQual <- factor (train$ExterQual, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$ExterCond <- factor (train$ExterCond, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+# Foundation (CHR)
+train$BsmtQual <- factor (train$BsmtQual, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$BsmtCond <- factor (train$BsmtCond, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$BsmtExposure <- factor (train$BsmtExposure, levels = c ("NA", "No", "Mn", "Av", "Gd"), ordered = TRUE)
+train$BsmtFinType1 <- factor (train$BsmtFinType1, levels = c ("NA", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE)
+# BsmtFinSF1 (INT)
+train$BsmtFinType2 <- factor (train$BsmtFinType2, levels = c ("NA", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE)
+# BsmtFinSF2 (INT)
+# BsmtUnfSF (INT)
+# TotalBsmtSF (INT)
+# Heating (CHR)
+train$HeatingQC <- factor (train$HeatingQC, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$CentralAir <- factor (train$CentralAir, levels = c ("N", "Y"), ordered = TRUE)
+train$Electrical <- factor (train$Electrical, levels = c ("NA", "Mix", "FuseP", "FuseF", "FuseA", "SBrkr"), ordered = TRUE)
+# 1stFlrSF (INT)
+# 2ndFlrSF (INT)
+# LowQualFinSF (INT)
+# GrLivArea (INT)
+# BsmtFullBath (INT)
+# BsmtHalfBath (INT)
+# FullBath (INT)
+# HalfBath (INT)
+# Bedroom (INT)
+# Kitchen (INT)
+train$KitchenQual <- factor (train$KitchenQual, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+# TotRmsAbvGrd (INT)
+train$Functional <- factor (train$Functional, levels = c ("NA", "Sal", "Sev", "Maj2", "Maj1", "Mod", "Min2", "Min1", "Typ"), ordered = TRUE)
+# Fireplaces (INT)
+train$FireplaceQu <- factor (train$FireplaceQu, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+# GarageType (CHR)
+train$GarageYrBlt [train$GarageYrBlt == "NA"] <- 0
+train$GarageYrBlt <- as.numeric (train$GarageYrBlt)
+train$GarageFinish <- factor (train$GarageFinish, levels = c ("NA", "Unf", "RFn", "Fin"), ordered = TRUE)
+# GarageCars (INT)
+# GarageArea (INT)
+train$GarageQual <- factor (train$GarageQual, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$GarageCond <- factor (train$GarageCond, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$PavedDrive <- factor (train$PavedDrive, levels = c ("N", "P", "Y"), ordered = TRUE)
+# WoodDeckSF (INT)
+# OpenPorchSF (INT)
+# EnclosedPorch (INT)
+# 3SsnPorch (INT)
+# ScreenPorch (INT)
+# PoolArea (INT)
+train$PoolQC <- factor (train$PoolQC, levels = c ("NA", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+train$Fence <- factor (train$Fence, levels = c ("NA", "MnWw", "GdWo", "MnPrv", "GdPrv"), ordered = TRUE)
+# MiscFeature (CHR)
+# MiscVal (INT)
+# MoSold (INT)
+# YrSold (INT)
+# SaleType (CHR)
+# SaleCondition (CHR)
+```
+
+``` {r}
+# MSSubClass (INT)
+# MSZoning (CHR)
+test$LotFrontage [test$LotFrontage == "NA"] <- 0
+test$LotFrontage <- as.numeric (test$LotFrontage)
+# LotArea (INT)
+test$Street <- factor (test$Street, levels = c ("Grvl", "Pave"), ordered = TRUE)
+test$Alley <- factor (test$Alley, levels = c ("NA", "Grvl", "Pave"), ordered = TRUE)
+test$LotShape <- factor (test$LotShape, levels = c ("IR3", "IR2", "IR1", "Reg"), ordered = TRUE)
+# LandContour (CHR)
+# test$Utilities <- factor (test$Utilities, levels = c ("NA", "ELO", "NoSeWa", "NoSewr", "AllPub"), ordered = TRUE)
+# LotConfig (CHR)
+test$LandSlope <- factor (test$LandSlope, levels = c ("Sev", "Mod", "Gtl"), ordered = TRUE)
+# Neighborhood (CHR)
+# Condition1 (CHR)
+# Condition2 (CHR)
+# BldgType (CHR)
+# HouseStyle (CHR)
+# OverallQual (INT)
+# OverallCond (INT)
+# YearBuilt (INT)
+# YearRemodAdd (INT)
+# RoofStyle (CHR)
+# RoofMat1 (CHR)
+# Exterior1st (CHR)
+# Exterior2nd (CHR)
+# MasVnrType (CHR)
+test$MasVnrArea [test$MasVnrArea == "NA"] <- 0
+test$MasVnrArea <- as.numeric (test$MasVnrArea)
+test$ExterQual <- factor (test$ExterQual, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$ExterCond <- factor (test$ExterCond, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+# Foundation (CHR)
+test$BsmtQual <- factor (test$BsmtQual, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$BsmtCond <- factor (test$BsmtCond, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$BsmtExposure <- factor (test$BsmtExposure, levels = c ("NA", "No", "Mn", "Av", "Gd"), ordered = TRUE)
+test$BsmtFinType1 <- factor (test$BsmtFinType1, levels = c ("NA", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE)
+# BsmtFinSF1 (INT)
+test$BsmtFinType2 <- factor (test$BsmtFinType2, levels = c ("NA", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE)
+# BsmtFinSF2 (INT)
+# BsmtUnfSF (INT)
+# TotalBsmtSF (INT)
+# Heating (CHR)
+test$HeatingQC <- factor (test$HeatingQC, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$CentralAir <- factor (test$CentralAir, levels = c ("N", "Y"), ordered = TRUE)
+test$Electrical <- factor (test$Electrical, levels = c ("NA", "Mix", "FuseP", "FuseF", "FuseA", "SBrkr"), ordered = TRUE)
+# 1stFlrSF (INT)
+# 2ndFlrSF (INT)
+# LowQualFinSF (INT)
+# GrLivArea (INT)
+test$BsmtFullBath [test$BsmtFullBath == "NA"] <- 0
+test$BsmtFullBath <- as.numeric (test$BsmtFullBath)
+test$BsmtHalfBath [test$BsmtHalfBath == "NA"] <- 0
+test$BsmtHalfBath <- as.numeric (test$BsmtHalfBath)
+# FullBath (INT)
+# HalfBath (INT)
+# Bedroom (INT)
+# Kitchen (INT)
+test$KitchenQual <- factor (test$KitchenQual, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+# TotRmsAbvGrd (INT)
+test$Functional <- factor (test$Functional, levels = c ("NA", "Sal", "Sev", "Maj2", "Maj1", "Mod", "Min2", "Min1", "Typ"), ordered = TRUE)
+# Fireplaces (INT)
+test$FireplaceQu <- factor (test$FireplaceQu, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+# GarageType (CHR)
+test$GarageYrBlt [test$GarageYrBlt == "NA"] <- 0
+test$GarageYrBlt <- as.numeric (test$GarageYrBlt)
+test$GarageFinish <- factor (test$GarageFinish, levels = c ("NA", "Unf", "RFn", "Fin"), ordered = TRUE)
+# GarageCars (INT)
+# GarageArea (INT)
+test$GarageQual <- factor (test$GarageQual, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$GarageCond <- factor (test$GarageCond, levels = c ("NA", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$PavedDrive <- factor (test$PavedDrive, levels = c ("N", "P", "Y"), ordered = TRUE)
+# WoodDeckSF (INT)
+# OpenPorchSF (INT)
+# EnclosedPorch (INT)
+# 3SsnPorch (INT)
+# ScreenPorch (INT)
+# PoolArea (INT)
+test$PoolQC <- factor (test$PoolQC, levels = c ("NA", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+test$Fence <- factor (test$Fence, levels = c ("NA", "MnWw", "GdWo", "MnPrv", "GdPrv"), ordered = TRUE)
+# MiscFeature (CHR)
+# MiscVal (INT)
+# MoSold (INT)
+# YrSold (INT)
+# SaleType (CHR)
+# SaleCondition (CHR)
+```
+
+``` {r}
+train.num <- train [, !sapply (train, is.character)]
+train.num <- lapply (train.num, as.numeric)
+test.num <- test [, !sapply (test, is.character)]
+#is.na (test.num)
+#lapply (test.num, unique)
+test.num <- lapply (test.num, as.numeric)
+#sapply (lapply (train.num, unique), length)
+#lapply (train.num, unique)
+#lapply (test.num, unique)
+#colSums (train == "NA")
+#str (train.num)
+#str (test.num)
+```
+
+# Linear Model using Least Squares
+``` {r}
+fit.ls <- lm (SalePrice ~ ., train.num)
+fit.ls
+pred.ls <- predict (fit.ls, newdata = test.num)
+mean ((test.num$SalePrice - pred.ls) ^ 2)
+```
+
+# Ridge Regression Model
+``` {r}
+xTrain <- model.matrix (SalePrice ~ ., train.num) [, -1]
+yTrain = train.num$SalePrice
+
+xTest <- model.matrix (SalePrice ~ ., test.num) [, -1]
+yTest = test.num$SalePrice
+
+set.seed (1)
+ridge.cv = cv.glmnet (xTrain, yTrain, alpha = 0)
+plot (ridge.cv)
+lambda.cv = ridge.cv$lambda.min
+
+fit.ridge <- glmnet (xTrain, yTrain, alpha = 0, lambda = lambda.cv)
+pred.ridge <- predict (fit.ridge, newx = xTest)
+mean ((yTest - pred.ridge) ^ 2)
+```
+
+# LASSO Model
+``` {r}
+set.seed (1)
+lasso.cv <- cv.glmnet (xTrain, yTrain, alpha = 1)
+plot (lasso.cv)
+lambda.cv = lasso.cv$lambda.min
+
+fit.lasso = glmnet (xTrain, yTrain, alpha = 1, lambda = lambda.cv)
+pred.lasso <- predict (fit.lasso, newx = xTest)
+mean ((yTest - pred.lasso) ^ 2)
+```
+
+# Principal Component Linear Regression Model
+``` {r}
+fit.pcr <- pcr (SalePrice ~ ., data = train.num, scale = TRUE, validation = "CV")
+summary (fit.pcr)
+validationplot (fit.pcr, val.type = "MSEP")
+
+fit.pcr2 <- pcr (SalePrice ~ ., data = test.num, scale = TRUE, ncomp = 33)
+pcr.pred <- predict (fit.pcr2, ncomp = 33)
+
+mean ((as.vector (pcr.pred) - test.num$SalePrice) ^ 2)
+```
+
+# Linear Regression Model with Components coming from Partial Least Squares
+``` {r}
+fit.pls <- plsr (SalePrice ~ ., data = train.num, scale = TRUE, validation = "CV")
+summary (fit.pls)
+validationplot (fit.pls, val.type = "MSEP")
+
+fit.pls2 <- plsr (SalePrice ~ ., data = test.num, scale = TRUE, ncomp = 5)
+pls.pred <- predict (fit.pls2, ncomp = 5)
+
+mean ((as.vector (pls.pred) - test.num$SalePrice) ^ 2)
+```
