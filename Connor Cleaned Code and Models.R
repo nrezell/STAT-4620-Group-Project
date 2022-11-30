@@ -130,25 +130,57 @@ test = test[,-62]
 
 summary(test)
 
+for (col in colnames(test)){
+  attributes(test[[col]]) <- attributes(train[[col]]) 
+}
+
 # MODELS
 
 # LINEAR REGRESSION
 model.lm <- lm(SalePrice ~ ., data=train)
+summary(model.lm)
 library(MASS)
 stepAIC(model.lm)
+stepAIC(model.lm, direction="forward")
 
 # LASSO
 library(glmnet)
 x.train=model.matrix(SalePrice~., train)[,-1]
 y.train=train$SalePrice
 x.test=model.matrix(SalePrice~., test)[,-1]
+y.test=test$SalePrice
 
 set.seed(4620)
 lasso.cv = cv.glmnet(x.train, y.train, alpha=1)
 plot(lasso.cv)
 
 lambda.cv = lasso.cv$lambda.min
+lambda.cv2 = lasso.cv$lambda.1se
 
 fit.lasso = glmnet(x.train, y.train, alpha=1, lambda=lambda.cv)
-coef(fit.lasso)
-pred.lasso = predict(fit.lasso, newx=x.test) #ERROR, need to update factoring
+fit.lasso2 = glmnet(x.train, y.train, alpha=1, lambda=lambda.cv2)
+
+pred.lasso = predict(fit.lasso, newx=x.test)
+pred.lasso2 = predict(fit.lasso2, newx=x.test)
+mean((y.test - pred.lasso)^2)
+mean((y.test - pred.lasso2)^2)
+
+coef(fit.lasso2)
+
+# Ridge
+set.seed(4620)
+ridge.cv = cv.glmnet(x.train, y.train, alpha=0)
+plot(ridge.cv)
+
+ridge.lambda.cv = ridge.cv$lambda.min
+
+fit.ridge = glmnet(x.train, y.train, alpha=0, lambda=ridge.lambda.cv)
+pred.ridge = predict(fit.ridge, newx=x.test)
+mean((y.test - pred.ridge)^2)
+
+# PCR
+library(pls)
+set.seed(4620)
+fit.pcr = pcr(SalePrice~., data=train, scale=TRUE, validation="CV")
+
+# PLS
