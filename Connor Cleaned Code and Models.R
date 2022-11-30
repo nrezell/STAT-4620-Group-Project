@@ -29,7 +29,26 @@ train.raw <- train.raw %>%
          ),
          MasVnrType = replace_na(MasVnrType, "None"),
          MasVnrArea = replace_na(MasVnrArea, 0),
-         MSSubClass = as.character(MSSubClass)
+         MSSubClass = as.character(MSSubClass),
+         ExterQual = factor (ExterQual, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         ExterCond = factor (ExterCond, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         BsmtQual = factor (BsmtQual, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         BsmtCond = factor (BsmtCond, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         BsmtExposure = factor(BsmtExposure, levels = c ("None", "No", "Mn", "Av", "Gd"), ordered = TRUE),
+         BsmtFinType1 = factor (BsmtFinType1, levels = c ("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE),
+         BsmtFinType2 = factor (BsmtFinType2, levels = c ("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE),
+         HeatingQC = factor (HeatingQC, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         CentralAir = factor (CentralAir, levels = c ("N", "Y"), ordered = TRUE),
+         Electrical = factor (Electrical, levels = c ("None", "Mix", "FuseP", "FuseF", "FuseA", "SBrkr"), ordered = TRUE),
+         KitchenQual = factor (KitchenQual, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         Functional = factor (Functional, levels = c ("None", "Sal", "Sev", "Maj2", "Maj1", "Mod", "Min2", "Min1", "Typ"), ordered = TRUE),
+         FireplaceQu = factor (FireplaceQu, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         GarageFinish = factor (GarageFinish, levels = c ("None", "Unf", "RFn", "Fin"), ordered = TRUE),
+         GarageQual = factor (GarageQual, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         GarageCond = factor (GarageCond, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         PavedDrive = factor (PavedDrive, levels = c ("N", "P", "Y"), ordered = TRUE),
+         PoolQC = factor (PoolQC, levels = c ("None", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         Fence = factor (Fence, levels = c ("None", "MnWw", "GdWo", "MnPrv", "GdPrv"), ordered = TRUE)
   )
 
 test.raw <- test.raw %>% 
@@ -57,19 +76,38 @@ test.raw <- test.raw %>%
          ),
          MasVnrType = replace_na(MasVnrType, "None"),
          MasVnrArea = replace_na(MasVnrArea, 0),
-         MSSubClass = as.character(MSSubClass)
+         MSSubClass = as.character(MSSubClass),
+         ExterQual = factor (ExterQual, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         ExterCond = factor (ExterCond, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         BsmtQual = factor (BsmtQual, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         BsmtCond = factor (BsmtCond, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         BsmtExposure = factor(BsmtExposure, levels = c ("None", "No", "Mn", "Av", "Gd"), ordered = TRUE),
+         BsmtFinType1 = factor (BsmtFinType1, levels = c ("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE),
+         BsmtFinType2 = factor (BsmtFinType2, levels = c ("None", "Unf", "LwQ", "Rec", "BLQ", "ALQ", "GLQ"), ordered = TRUE),
+         HeatingQC = factor (HeatingQC, levels = c ("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         CentralAir = factor (CentralAir, levels = c ("N", "Y"), ordered = TRUE),
+         Electrical = factor (Electrical, levels = c ("None", "Mix", "FuseP", "FuseF", "FuseA", "SBrkr"), ordered = TRUE),
+         KitchenQual = factor (KitchenQual, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         Functional = factor (Functional, levels = c ("None", "Sal", "Sev", "Maj2", "Maj1", "Mod", "Min2", "Min1", "Typ"), ordered = TRUE),
+         FireplaceQu = factor (FireplaceQu, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         GarageFinish = factor (GarageFinish, levels = c ("None", "Unf", "RFn", "Fin"), ordered = TRUE),
+         GarageQual = factor (GarageQual, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         GarageCond = factor (GarageCond, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         PavedDrive = factor (PavedDrive, levels = c ("N", "P", "Y"), ordered = TRUE),
+         PoolQC = factor (PoolQC, levels = c ("None", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
+         Fence = factor (Fence, levels = c ("None", "MnWw", "GdWo", "MnPrv", "GdPrv"), ordered = TRUE)
   )
 
-# determine numeric variable columns
-numeric_cols <- unlist(lapply(train.raw, is.numeric))
+# determine character variable columns
+char_cols <- unlist(lapply(train.raw, is.character))
 
-# subset numeric variables
-train.num <- train.raw[,numeric_cols]
-test.num <- test.raw[,numeric_cols]
+# subset already factored and numeric variables
+train.num <- train.raw[,char_cols==F]
+test.num <- test.raw[,char_cols==F]
 
 # subset categorical variables
-train_fac <- train.raw[,numeric_cols==F]
-test_fac <- test.raw[,numeric_cols==F]
+train_fac <- train.raw[,char_cols]
+test_fac <- test.raw[,char_cols]
 
 # factor the categorical variables
 train.fac.df <- as.data.frame(unclass(train_fac),stringsAsFactors=TRUE)
@@ -78,6 +116,8 @@ test.fac.df <- as.data.frame(unclass(test_fac),stringsAsFactors=TRUE)
 # recombine the data
 train <- cbind(train.num, train.fac.df)
 test <- cbind(test.num, test.fac.df)
+
+sapply(train, function(x) sum(is.na(x)))
 
 train = na.omit(train)
 test = na.omit(test)
@@ -113,4 +153,4 @@ lambda.cv = lasso.cv$lambda.min
 
 fit.lasso = glmnet(x.train, y.train, alpha=1, lambda=lambda.cv)
 coef(fit.lasso)
-pred.lasso = predict(fit.lasso, newx=x.test)
+pred.lasso = predict(fit.lasso, newx=x.test) #ERROR, need to update factoring
