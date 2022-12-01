@@ -149,6 +149,13 @@ x.train=model.matrix(SalePrice~., train)[,-1]
 y.train=train$SalePrice
 x.test=model.matrix(SalePrice~., test)[,-1]
 y.test=test$SalePrice
+<<<<<<< HEAD
+=======
+
+Missing1 <- setdiff(colnames(x.test), colnames(x.train))
+Missing2 <- setdiff(colnames(x.train), colnames(x.test))
+missing <- c(Missing1, Missing2)
+>>>>>>> 2cdc4f22f667f13a9a0d8308ed2764e147267bcb
 
 set.seed(4620)
 lasso.cv = cv.glmnet(x.train, y.train, alpha=1)
@@ -158,6 +165,7 @@ lambda.cv = lasso.cv$lambda.min
 lambda.cv2 = lasso.cv$lambda.1se
 
 fit.lasso = glmnet(x.train, y.train, alpha=1, lambda=lambda.cv)
+<<<<<<< HEAD
 fit.lasso2 = glmnet(x.train, y.train, alpha=1, lambda=lambda.cv2)
 
 pred.lasso = predict(fit.lasso, newx=x.test)
@@ -166,6 +174,11 @@ mean((y.test - pred.lasso)^2)
 mean((y.test - pred.lasso2)^2)
 
 coef(fit.lasso2)
+=======
+
+pred.lasso = predict(fit.lasso, newx=x.test)
+mean((y.test - pred.lasso)^2)
+>>>>>>> 2cdc4f22f667f13a9a0d8308ed2764e147267bcb
 
 # Ridge
 set.seed(4620)
