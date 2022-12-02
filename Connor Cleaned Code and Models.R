@@ -95,8 +95,11 @@ test.raw <- test.raw %>%
          GarageCond = factor (GarageCond, levels = c ("None", "Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
          PavedDrive = factor (PavedDrive, levels = c ("N", "P", "Y"), ordered = TRUE),
          PoolQC = factor (PoolQC, levels = c ("None", "Fa", "TA", "Gd", "Ex"), ordered = TRUE),
-         Fence = factor (Fence, levels = c ("None", "MnWw", "GdWo", "MnPrv", "GdPrv"), ordered = TRUE)
-  )
+         Fence = factor (Fence, levels = c ("None", "MnWw", "GdWo", "MnPrv", "GdPrv"), ordered = TRUE),
+  ) %>% rename(`1stFlrSF` = X1stFlrSF) %>% 
+  rename(`2ndFlrSF` = X2ndFlrSF) %>% 
+  rename(`3SsnPorch` = X3SsnPorch)
+
 
 # determine character variable columns
 char_cols <- unlist(lapply(train.raw, is.character))
@@ -128,20 +131,42 @@ test = test[, -1]
 train = train[,-62]
 test = test[,-62]
 
-summary(test)
-
 for (col in colnames(test)){
   attributes(test[[col]]) <- attributes(train[[col]]) 
 }
 
+save(train, file="train_db.RData")
+save(test, file="test_db.RData")
+
 # MODELS
+
+load("train_db.RData")
+load("test_db.RData")
 
 # LINEAR REGRESSION
 model.lm <- lm(SalePrice ~ ., data=train)
 summary(model.lm)
 library(MASS)
-stepAIC(model.lm)
-stepAIC(model.lm, direction="forward")
+#stepAIC(model.lm) # backwards
+model.null <- lm(SalePrice ~ 1, data=train)
+#stepAIC(model.null, direction="both",
+#        scope=list(lower=model.null, upper=model.lm))
+model.lmstep <- lm(formula = SalePrice ~ OverallQual + GrLivArea + Neighborhood + 
+                     MSSubClass + RoofMatl + BsmtFinSF1 + BsmtQual + KitchenQual + 
+                     Condition2 + BsmtExposure + OverallCond + YearBuilt + LotArea + 
+                     SaleCondition + TotalBsmtSF + PoolQC + GarageCars + ExterQual + 
+                     Functional + Condition1 + BedroomAbvGr + PoolArea + ScreenPorch + 
+                     LandSlope + MasVnrArea + Exterior1st + MSZoning + LandContour + 
+                     LotConfig + GarageQual + LowQualFinSF + GarageCond + Street + 
+                     BsmtFullBath + YearRemodAdd + KitchenAbvGr + TotRmsAbvGrd + 
+                     WoodDeckSF + Fence + `1stFlrSF` + Fireplaces + GarageArea + 
+                     MoSold + BsmtFinSF2, data = train)
+summary(model.lmstep)
+
+coefs <- summary(model.lmstep)$coefficients
+vars <- rownames(coefs)[which(coefs[, 4] < 0.05)]
+
+pred.lm <- predict(model.lmstep, test[,-55])
 
 # LASSO
 library(glmnet)
@@ -151,7 +176,7 @@ x.test=model.matrix(SalePrice~., test)[,-1]
 y.test=test$SalePrice
 
 set.seed(4620)
-lasso.cv = cv.glmnet(x.train, y.train, alpha=1)
+lasso.cv = cv.glmnet(x.train, y.train, alpha=1, standardize=TRUE)
 plot(lasso.cv)
 
 lambda.cv = lasso.cv$lambda.min
@@ -165,13 +190,9 @@ pred.lasso2 = predict(fit.lasso2, newx=x.test)
 mean((y.test - pred.lasso)^2)
 mean((y.test - pred.lasso2)^2)
 
-coef(fit.lasso2)
-pred.lasso = predict(fit.lasso, newx=x.test)
-mean((y.test - pred.lasso)^2)
-
 # Ridge
 set.seed(4620)
-ridge.cv = cv.glmnet(x.train, y.train, alpha=0)
+ridge.cv = cv.glmnet(x.train, y.train, alpha=0, standardize=TRUE)
 plot(ridge.cv)
 
 ridge.lambda.cv = ridge.cv$lambda.min
@@ -183,6 +204,19 @@ mean((y.test - pred.ridge)^2)
 # PCR
 library(pls)
 set.seed(4620)
-fit.pcr = pcr(SalePrice~., data=train, scale=TRUE, validation="CV")
+fit.pcr = pcr(SalePrice~., data=train, validation="CV")
+summary(fit.pcr)
+validationplot(fit.pcr, val.type="MSEP")
+selectNcomp(fit.pcr, method="onesigma", plot=TRUE)
+pcr.pred = predict(fit.pcr, x.test, ncomp=136)
+pcr.mse <- mean((as.vector(pcr.pred) - y.test)^2)
+pcr.mse
 
 # PLS
+set.seed(4620)
+fit.pls = plsr(SalePrice~., data=train, validation="CV")
+validationplot(fit.pls, val.type="MSEP")
+selectNcomp(fit.pls, method="onesigma", plot=TRUE)
+pls.pred = predict(fit.pls, x.test, ncomp=29)
+pls.mse <- mean((as.vector(pls.pred) - y.test)^2)
+pls.mse
