@@ -166,8 +166,6 @@ summary(model.lmstep)
 coefs <- summary(model.lmstep)$coefficients
 vars <- rownames(coefs)[which(coefs[, 4] < 0.05)]
 
-pred.lm <- predict(model.lmstep, test[,-55])
-
 # LASSO
 library(glmnet)
 x.train=model.matrix(SalePrice~., train)[,-1]
