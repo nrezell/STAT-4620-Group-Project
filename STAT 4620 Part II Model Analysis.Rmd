@@ -591,3 +591,15 @@ pls.pred <- predict (fit.pls2, ncomp = 29)
 
 mean ((as.vector (pls.pred) - test$SalePrice) ^ 2)
 ```
+
+# Visualizations
+``` {r}
+
+# Residuals vs Fitted
+plot(fit.pls$fitted.values, fit.pls$residuals, xlab="Fitted Values", ylab="Residuals", main="Fitted Values vs Residuals", col="dark green")
+abline(h=0)
+
+# Hitsogram of Residuals
+hist(fit.pls$residuals, breaks=100, xlab="Residuals", ylab="Count", main="Histogram of Residuals"
+     , col="dark red", xlim=c(-2e+05, 2e+05))
+```
